@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:lang="http://www.springframework.org/schema/lang"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.0.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+		
+		<!-- 扫描包 -->
+		<context:component-scan base-package="com.ty"></context:component-scan>
+		
+		<!-- 导入文件 -->
+		<context:property-placeholder location="classpath:init.properties"/>
+		
+		<!-- 配置c3p0连接池 -->
+		<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+			<property name="user" value="${jdbc.username}"></property>
+			<property name="password" value="${jdbc.password}"></property>
+			<property name="jdbcUrl" value="${jdbc.url}"></property>
+			<property name="driverClass" value="${jdbc.driver}"></property>
+		</bean>
+		
+		<!-- 配置jdbcTemplate -->
+		<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+			<property name="dataSource" ref="dataSource"> </property>
+		</bean>
+		
+		<!-- 配置事务：注解模式 -->
+		<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<property name="dataSource" ref="dataSource"></property>
+		</bean>
+		
+		<!--事务第一种方式：开启注解  -->
+		<!-- <tx:annotation-driven transaction-manager="transactionManager"/> -->
+		
+		<!--事务第二种方式：开启注解  -->
+		<!--配置事务的增强-->
+	     <tx:advice id="tx-advice" transaction-manager="transactionManager">
+	        <!--配置事务的一些属性-->
+	       <tx:attributes>
+	          <!--
+	              propagation:这个称为事务的传输级别
+	                   REQUIRED:和最大的事务共用一个事务
+	                   REQUIRES_NEW:这个表示的是自己使用自己的事务和最大的这个事务无关
+	          -->
+	          <tx:method name="*" read-only="false"/>
+	       </tx:attributes>
+	     </tx:advice>
+     
+	     <!--配置aop-->
+	     <aop:config>
+	        <!--配置切入点表达式-->
+	        <aop:pointcut expression="execution (* com.ty.service.TransferService.*(..))" id="pt"/>
+	        <!--配置应用事务增强-->
+	        <aop:advisor advice-ref="tx-advice" pointcut-ref="pt"/>
+	     </aop:config>
+
+	    <!--开启aop的自动代理-->
+	    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+</beans>
